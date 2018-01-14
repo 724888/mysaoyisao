@@ -1,36 +1,16 @@
-/*
- * Copyright (C) 2012 ZXing authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 
 package jiexingxing.com.saoyisao.zxing.activity;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.DialogInterface;
-import android.content.Intent;
 import android.graphics.Rect;
 import android.hardware.Camera;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
-import android.text.TextUtils;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -55,33 +35,15 @@ import jiexingxing.com.saoyisao.zxing.utils.BeepManager;
 import jiexingxing.com.saoyisao.zxing.utils.CaptureActivityHandler;
 import jiexingxing.com.saoyisao.zxing.utils.InactivityTimer;
 
-/**
- * This activity opens the camera and does the actual scanning on a background
- * thread. It draws a viewfinder to help the user place the barcode correctly,
- * shows feedback as the image processing is happening, and then overlays the
- * results when a scan is successful.
- *
- * @author dswitkin@google.com (Daniel Switkin)
- * @author Sean Owen
- */
-public final class CaptureActivity extends Activity implements SurfaceHolder.Callback  {
 
-   int   Tag=40;/*
+public final class CaptureActivity extends Activity implements SurfaceHolder.Callback  {
+    int   Tag=20;/*
    我设置的光线传感器阈值
    小于40会可以出现打开手电筒的标志   点击可以打开手电筒（可以在稍微黑暗的环境的时候就会出现图标）
-
    如果想自动开启关闭     全局搜索  111111111111111111   的逻辑放到 222222222222222222222222中去就好了
-
-
-
    */
-
-
-
-
-
     private static final String TAG = CaptureActivity.class.getSimpleName();
-    boolean isopen=true;
+    boolean isopen=false;
     private Camera camera;
     private CameraManager cameraManager;
     private CaptureActivityHandler handler;
@@ -100,7 +62,7 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
 
     private Rect mCropRect = null;
     private boolean isHasSurface = false;
-//    private MyfriendPresenter presenter;
+    //    private MyfriendPresenter presenter;
     private TextView resulttext;
     private ImageView openlight;
     private TextView lighttext;
@@ -149,7 +111,6 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
 
         openlight.setVisibility(View.GONE);
         lighttext.setVisibility(View.GONE);
-
 /*
 *
 * 光线传感器
@@ -164,42 +125,39 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
 
 
 //222222222222222222222222     手动开启手电筒和关闭手电筒
-        scanCropView.setOnClickListener(new View.OnClickListener() {
-
+        openlight.setOnClickListener(new View.OnClickListener() {
 
 
             @Override
             public void onClick(View v) {
-
-
-
                 camera = cameraManager.getCamera();
-
                 try {
                     Camera.Parameters parameters = camera.getParameters();
-                    if (isopen) {
+                    if (!isopen) {
+
+                        openlight.setBackgroundResource(R.drawable.flashlight_on);
                         if (parameters.getFlashMode().equals("torch")) {
                             return;
                         } else {
                             parameters.setFlashMode("torch");
                         }
+                        lighttext.setText("点击关闭");
+                        isopen = true;
+                        camera.setParameters(parameters);
                     } else {
+                        openlight.setBackgroundResource(R.drawable.flashlight_off);
+                        isopen = false;
+                        lighttext.setText("轻触点亮");
                         if (parameters.getFlashMode().equals("off")) {
                             return;
                         } else {
                             parameters.setFlashMode("off");
                         }
+                        camera.setParameters(parameters);
                     }
-                    camera.setParameters(parameters);
                 } catch (Exception e) {
                     finishFlashUtils();
                 }
-                isopen = !isopen;
-
-
-
-
-
             }
         });
     }
@@ -225,7 +183,9 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
         // first launch. That led to bugs where the scanning rectangle was the
         // wrong size and partially
         // off screen.
-if (cameraManager==null){cameraManager = new CameraManager(getApplication());}
+        if (cameraManager == null) {
+            cameraManager = new CameraManager(getApplication());
+        }
 
 
         handler = null;
@@ -242,7 +202,39 @@ if (cameraManager==null){cameraManager = new CameraManager(getApplication());}
         }
 
         inactivityTimer.onResume();
+
+
+        camera = cameraManager.getCamera();
+        try {
+            Camera.Parameters parameters = camera.getParameters();
+            if (!isopen) {
+
+                openlight.setBackgroundResource(R.drawable.flashlight_on);
+                if (parameters.getFlashMode().equals("torch")) {
+                    return;
+                } else {
+                    parameters.setFlashMode("torch");
+                }
+                lighttext.setText("点击关闭");
+                isopen = true;
+                camera.setParameters(parameters);
+            } else {
+                openlight.setBackgroundResource(R.drawable.flashlight_off);
+                isopen = false;
+                lighttext.setText("轻触点亮");
+                if (parameters.getFlashMode().equals("off")) {
+                    return;
+                } else {
+                    parameters.setFlashMode("off");
+                }
+                camera.setParameters(parameters);
+            }
+        } catch (Exception e) {
+            finishFlashUtils();
+        }
+
     }
+
 
     @Override
     protected void onPause() {
@@ -408,8 +400,9 @@ if (cameraManager==null){cameraManager = new CameraManager(getApplication());}
 
 
 
-//      111111111111111111
+    //      111111111111111111
     SensorEventListener listener = new SensorEventListener() {
+
 
         @Override
         public void onAccuracyChanged(Sensor sensor, int accuracy) {
@@ -420,21 +413,22 @@ if (cameraManager==null){cameraManager = new CameraManager(getApplication());}
         public void onSensorChanged(SensorEvent event) {
             //当传感器监测到的数值发生变化时
             float value = event.values[0];
-            if (value<Tag){
-                openlight.setVisibility(View.VISIBLE);
+            if (value < Tag) {
                 lighttext.setVisibility(View.VISIBLE);
-            }else{
-                openlight.setVisibility(View.GONE);
-                lighttext.setVisibility(View.GONE);
-
-
+                openlight.setVisibility(View.VISIBLE);
+            } else {
+                if (isopen) {
+                    lighttext.setVisibility(View.VISIBLE);
+                    openlight.setVisibility(View.VISIBLE);
+                } else {
+                    lighttext.setVisibility(View.GONE);
+                    openlight.setVisibility(View.GONE);
+                }
             }
-
-
 
         }
 
-    };
 
+    };
 
 }

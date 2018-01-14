@@ -50,10 +50,9 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_above="@+id/lighttext"
-                android:layout_alignParentTop="true"
                 android:layout_centerHorizontal="true"
-                android:layout_marginTop="100dp"
-                android:src="@drawable/flashlight_off"
+                android:layout_marginTop="120dp"
+                android:background="@drawable/flashlight_off"
                 android:visibility="gone" />
 
             <TextView
